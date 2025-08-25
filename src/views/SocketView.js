@@ -20,24 +20,78 @@ class SocketView {
      * Handle new socket connection
      * @param {Object} socket - Socket.IO socket instance
      */
-    handleConnection(socket) {
-        console.log(`User connected: ${socket.id}`);
+    async handleConnection(socket) {
+        console.log(`Socket connected: ${socket.id}`);
 
-        // Initialize user through controller
+        // Initialize user through controller (using socket.id temporarily)
         const user = this.userController.createUser(socket.id);
 
-        // Send connection confirmation
+        // Send connection confirmation and request device registration
         socket.emit('connected', {
-            userId: socket.id,
+            socketId: socket.id,
             timestamp: new Date(),
-            requiresProfileSetup: !user.isProfileComplete()
+            message: 'Please register your device using registerDevice event'
+        });
+
+        // Register all event handlers
+        this.registerEventHandlers(socket);
+    }
+
+    /**
+     * Handle device registration
+     * @param {Object} socket - Socket.IO socket instance
+     * @param {Object} data - Device registration data
+     */
+    async handleRegisterDevice(socket, data) {
+        if (!data || !data.deviceId) {
+            socket.emit('error', 'Device ID is required for registration');
+            return;
+        }
+
+        const deviceId = data.deviceId.toString().trim();
+
+        if (!deviceId) {
+            socket.emit('error', 'Valid Device ID is required');
+            return;
+        }
+
+        console.log(`Device registered: ${deviceId} (Socket: ${socket.id})`);
+
+        // Store device ID in socket for later use
+        socket.deviceId = deviceId;
+
+        // Log user login to database
+        try {
+            const UserData = require('../models/UserData');
+            const LoginLogs = require('../models/LoginLogs');
+
+            // Update user data with login
+            await UserData.userLogin(deviceId);
+
+            // Log the login event
+            await LoginLogs.logLogin(deviceId);
+
+            console.log(`Device ${deviceId} login logged to database`);
+        } catch (error) {
+            console.error(`Failed to log device login: ${error.message}`);
+        }
+
+        // Update user controller with device ID
+        const user = this.userController.getUser(socket.id);
+        if (user) {
+            user.deviceId = deviceId;
+        }
+
+        // Send registration confirmation
+        socket.emit('deviceRegistered', {
+            deviceId: deviceId,
+            socketId: socket.id,
+            timestamp: new Date(),
+            message: 'Device registered successfully'
         });
 
         // Broadcast updated user count
         this.broadcastActiveUsers();
-
-        // Register all event handlers
-        this.registerEventHandlers(socket);
     }
 
     /**
@@ -45,6 +99,9 @@ class SocketView {
      * @param {Object} socket - Socket.IO socket instance
      */
     registerEventHandlers(socket) {
+        // Device registration event - must be called first by client
+        socket.on('registerDevice', (data) => this.handleRegisterDevice(socket, data));
+
         // One-on-one chat events
         socket.on('startChat', () => this.handleStartChat(socket));
         socket.on('sendMessage', (data) => this.handleSendMessage(socket, data));
@@ -283,8 +340,27 @@ class SocketView {
     /**
      * Handle user disconnect
      */
-    handleDisconnect(socket) {
-        console.log(`User disconnected: ${socket.id}`);
+    async handleDisconnect(socket) {
+        const deviceId = socket.deviceId;
+        console.log(`Socket disconnected: ${socket.id}${deviceId ? ` (Device: ${deviceId})` : ''}`);
+
+        // Log user logout to database if device was registered
+        if (deviceId) {
+            try {
+                const UserData = require('../models/UserData');
+                const LoginLogs = require('../models/LoginLogs');
+
+                // Update user data with logout
+                await UserData.userLogout(deviceId);
+
+                // Log the logout event
+                await LoginLogs.logLogout(deviceId);
+
+                console.log(`Device ${deviceId} logout logged to database`);
+            } catch (error) {
+                console.error(`Failed to log device logout: ${error.message}`);
+            }
+        }
 
         // End any active chat
         this.chatController.endChat(socket.id);

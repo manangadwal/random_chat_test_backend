@@ -8,12 +8,19 @@
     "dev": "node --watch index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["websocket", "chat", "socket.io", "random", "stranger"],
+  "keywords": [
+    "websocket",
+    "chat",
+    "socket.io",
+    "random",
+    "stranger"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "socket.io": "^4.7.5",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "mongoose": "^8.18.0",
+    "socket.io": "^4.7.5"
   }
 }
