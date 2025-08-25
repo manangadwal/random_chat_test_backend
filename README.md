@@ -1,497 +1,308 @@
-# Random Chat Server
+# Random Chat Server - MVC Architecture
 
-A WebSocket-based chat server that connects random strangers for anonymous conversations using Socket.IO.
+## 🚀 Overview
 
-## Features
+A modern, scalable WebSocket-based chat server built with **MVC architecture** that enables real-time one-on-one and group conversations between users. Features intelligent matching, content filtering, and comprehensive monitoring.
 
-- **Random Matching**: Connects users with random strangers instantly
-- **Smart Matching**: Optional preference-based matching system
-- **Profile System**: Optional user profiles with age, gender, interests, and location
-- **Gender Preferences**: Filter matches by preferred gender
-- **Age Range Filtering**: Set preferred age range for matches
-- **Location Matching**: Option to match with users from same location
-- **Interest-based Matching**: Find users with common interests
-- **Real-time Messaging**: Instant message delivery using WebSockets
-- **Parallel Chats**: Multiple chat sessions can run simultaneously
-- **Chat Controls**: Start, end, and skip chats seamlessly
-- **Active Users Tracking**: Real-time online user count updates
-- **Memory Storage**: Uses in-memory storage (no database required)
-- **Auto-matching**: Skip feature automatically finds new partners
-- **Profanity Filter**: Automatically filters inappropriate words in Hindi and English
+## ✨ Key Features
 
-## Server Events
+- **Real-Time Communication**: WebSocket-based instant messaging
+- **One-on-One Chat**: Private conversations with intelligent partner matching
+- **Group Chat**: Multi-user rooms (up to 6 participants)
+- **Smart Matching**: Gender preference-based partner matching
+- **Content Filtering**: Multi-language profanity filtering (English & Hindi)
+- **User Profiles**: Customizable profiles with avatars and nicknames
+- **Live Statistics**: Real-time monitoring and analytics
+- **MVC Architecture**: Scalable, maintainable codebase
 
-### Client to Server Events
+## 🏗️ Architecture
 
-| Event                    | Description                                        | Payload                                               |
-| ------------------------ | -------------------------------------------------- | ----------------------------------------------------- | -------- | -------- |
-| `startChat`              | Request to start a new chat with a random stranger | None                                                  |
-| `sendMessage`            | Send a message in current chat                     | `{ message: string }`                                 |
-| `endChat`                | End the current chat                               | None                                                  |
-| `skipChat`               | End current chat and start looking for new partner | None                                                  |
-| `getActiveUsers`         | Request current active users count                 | None                                                  |
-| `manageProfile`          | Setup or update user profile (single event)        | `{ name?: string, gender?: string, avatar?: string }` |
-| `setGenderPreference`    | Set gender matching preference                     | `{ preferredGender: 'male'                            | 'female' | 'any' }` |
-| `removeGenderPreference` | Remove gender preference (set to 'any')            | None                                                  |
-| `getProfile`             | Get current user profile and preferences           | None                                                  |
+Built using the **Model-View-Controller (MVC)** pattern for maximum scalability and maintainability:
 
-### Server to Client Events
+- **Models**: Data entities (User, Chat, GroupChat, Message)
+- **Views**: Presentation layer (SocketView, HttpView)
+- **Controllers**: Business logic (UserController, ChatController, GroupChatController)
+- **Repositories**: Data access layer with CRUD operations
 
-| Event                     | Description                              | Payload                                                                        |
-| ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| `connected`               | User successfully connected to server    | `{ userId: string, timestamp: Date, requiresProfileSetup: boolean }`           |
-| `chatStarted`             | Chat successfully started with a partner | `{ chatId: string, partnerId: string, partnerInfo: { name, avatar, gender } }` |
-| `waitingForPartner`       | Added to waiting queue                   | None                                                                           |
-| `messageReceived`         | New message from chat partner            | `{ senderId: string, message: string, timestamp: Date }`                       |
-| `chatEnded`               | Current chat has ended                   | None                                                                           |
-| `activeUsers`             | Current number of active users           | `number`                                                                       |
-| `profileUpdated`          | Profile setup/update completed           | `{ profile: object, message: string }`                                         |
-| `genderPreferenceUpdated` | Gender preference updated                | `{ preferences: object, message: string }`                                     |
-| `profileData`             | Current profile and preferences data     | `{ profile: object, preferences: object }`                                     |
-| `error`                   | Error message                            | `string`                                                                       |
+## 📁 Project Structure
 
-## Running the Server Locally
-
-### Prerequisites
-
-- Node.js (v14 or higher)
-- npm or yarn
-
-### Installation & Setup
-
-1. **Install dependencies:**
-
-   ```bash
-   npm install
-   ```
-
-2. **Start the server:**
-
-   ```bash
-   npm start
-   ```
-
-   For development with auto-restart:
-
-   ```bash
-   npm run dev
-   ```
-
-3. **Server will be running on:**
-   - HTTP: `http://localhost:3000`
-   - WebSocket: `ws://localhost:3000`
-
-### Health Check
-
-Visit `http://localhost:3000` to see server status and statistics.
-
-## Profile & Preferences System
-
-### Optional Profile Setup
-
-After connecting, users can optionally set up their profile using a single `manageProfile` event:
-
-- **Name**: Display name shown to chat partners
-- **Gender**: 'male', 'female', or other
-- **Avatar**: Profile picture URL
-
-### Gender Preferences
-
-Users can set gender preferences for matching:
-
-- **'male'**: Match only with male users
-- **'female'**: Match only with female users
-- **'any'**: Match with anyone (default)
-- **Remove preference**: Use `removeGenderPreference` to reset to 'any'
-
-### Matching Algorithm
-
-The server uses a simple compatibility system that considers:
-
-1. **Mutual gender preferences** - Both users' gender preferences must be satisfied
-
-If no compatible match is found, users are added to the waiting queue for the next available partner.
-
-## App Flow
-
-1. **User opens app** → Connects to server automatically
-2. **Gets connection event** → Server assigns unique socket ID and sends connection confirmation
-3. **Optional profile setup** → User can set up profile or skip (can be done later in settings)
-4. **Optional preferences** → User can set chat preferences or use defaults
-5. **Gets online count** → Receives real-time active user updates
-6. **Hits "Start Chat"** → Server uses socket ID and preferences for matching
-7. **Smart matching process**:
-   - Server finds compatible partner based on preferences
-   - If compatible user waiting → Instant match, chat starts
-   - If no compatible users → Added to queue, waits for compatible partner
-   - Multiple chats run in parallel
-8. **In chat**: Send/receive messages in real-time
-9. **Chat controls**:
-   - **Stop** → Ends current chat, returns to main screen
-   - **Skip** → Ends current chat, automatically finds new compatible partner
-10. **Settings** → User can update profile and preferences anytime
-11. **Repeat** → User can start new chats anytime
-
-## Flutter Integration
-
-### 1. Add Socket.IO Client Dependency
-
-Add to your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  socket_io_client: ^2.0.3+1
+```
+├── docs/                   # Comprehensive documentation
+│   ├── APP_OVERVIEW.md     # Application overview and features
+│   ├── CONNECTION_EVENTS.md # Connection event documentation
+│   ├── CHAT_EVENTS.md      # One-on-one chat events
+│   ├── GROUP_CHAT_EVENTS.md # Group chat events
+│   ├── PROFILE_EVENTS.md   # Profile management events
+│   ├── STATISTICS_EVENTS.md # Statistics and monitoring
+│   └── API_ENDPOINTS.md    # HTTP API documentation
+├── src/
+│   ├── models/             # Data models
+│   ├── views/              # Presentation layer
+│   ├── controllers/        # Business logic
+│   ├── repositories/       # Data access
+│   ├── services/           # Business services
+│   ├── storage/            # Data storage
+│   ├── filters/            # Content filtering
+│   ├── utils/              # Utilities
+│   └── server.js           # Main server
+├── index.js                # Application entry point
+├── package.json            # Dependencies
+└── MVC_README.md          # Detailed MVC documentation
 ```
 
-### 2. Flutter Implementation Example
+## 🚀 Quick Start
 
-```dart
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+### Installation
 
-class ChatService {
-  late IO.Socket socket;
-  String? tempUserId;
-
-  void initSocket() {
-    socket = IO.io('http://localhost:3000', <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': false,
-    });
-
-    socket.connect();
-
-    // Listen for connection confirmation
-    socket.on('connected', (data) {
-      tempUserId = data['userId'];
-      print('Connected to server with ID: $tempUserId');
-      print('Requires profile setup: ${data['requiresProfileSetup']}');
-      // Get initial active users count
-      getActiveUsers();
-    });
-
-    // Listen for chat started
-    socket.on('chatStarted', (data) {
-      print('Chat started with partner: ${data['partnerId']}');
-      // Update UI to show chat interface
-    });
-
-    // Listen for messages
-    socket.on('messageReceived', (data) {
-      print('Message: ${data['message']}');
-      // Add message to chat UI
-    });
-
-    // Listen for chat ended (no reason provided)
-    socket.on('chatEnded', (_) {
-      print('Chat ended');
-      // Update UI to show chat ended, return to main screen
-    });
-
-    // Listen for active users count (real-time updates)
-    socket.on('activeUsers', (count) {
-      print('Active users: $count');
-      // Update UI with user count
-    });
-
-    // Listen for waiting status
-    socket.on('waitingForPartner', (_) {
-      print('Waiting for partner...');
-      // Show waiting UI
-    });
-  }
-
-  // Start chat - no need to send ID
-  void startChat() {
-    socket.emit('startChat');
-  }
-
-  void sendMessage(String message) {
-    socket.emit('sendMessage', {'message': message});
-  }
-
-  // Stop chat - ends and returns to main
-  void endChat() {
-    socket.emit('endChat');
-  }
-
-  // Skip chat - ends current and finds new partner automatically
-  void skipChat() {
-    socket.emit('skipChat');
-  }
-
-  void getActiveUsers() {
-    socket.emit('getActiveUsers');
-  }
-
-  // Profile management (single method for setup/update)
-  void manageProfile({
-    String? name,
-    String? gender,
-    String? avatar
-  }) {
-    socket.emit('manageProfile', {
-      if (name != null) 'name': name,
-      if (gender != null) 'gender': gender,
-      if (avatar != null) 'avatar': avatar,
-    });
-  }
-
-  // Gender preference methods
-  void setGenderPreference(String preferredGender) {
-    socket.emit('setGenderPreference', {
-      'preferredGender': preferredGender, // 'male', 'female', 'any'
-    });
-  }
-
-  void removeGenderPreference() {
-    socket.emit('removeGenderPreference');
-  }
-
-  void getProfile() {
-    socket.emit('getProfile');
-  }
-
-  void disconnect() {
-    socket.disconnect();
-  }
-}
+```bash
+npm install
 ```
 
-### 3. Flutter UI Example
+### Start Server
 
-```dart
-class ChatScreen extends StatefulWidget {
-  @override
-  _ChatScreenState createState() => _ChatScreenState();
-}
-
-class _ChatScreenState extends State<ChatScreen> {
-  final ChatService _chatService = ChatService();
-  final TextEditingController _messageController = TextEditingController();
-  List<Map<String, dynamic>> messages = [];
-  bool isInChat = false;
-  bool isWaiting = false;
-  int activeUsers = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _chatService.initSocket();
-
-    // Setup listeners
-    _chatService.socket.on('chatStarted', (data) {
-      setState(() {
-        isInChat = true;
-        isWaiting = false;
-        messages.clear();
-      });
-    });
-
-    _chatService.socket.on('messageReceived', (data) {
-      setState(() {
-        messages.add({
-          'message': data['message'],
-          'isMe': false,
-          'timestamp': DateTime.now(),
-        });
-      });
-    });
-
-    _chatService.socket.on('chatEnded', (_) {
-      setState(() {
-        isInChat = false;
-        isWaiting = false;
-      });
-    });
-
-    _chatService.socket.on('waitingForPartner', (_) {
-      setState(() {
-        isWaiting = true;
-      });
-    });
-
-    _chatService.socket.on('activeUsers', (count) {
-      setState(() {
-        activeUsers = count;
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Random Chat'),
-        actions: [
-          Text('Users: $activeUsers'),
-          SizedBox(width: 16),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Chat controls
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                ElevatedButton(
-                  onPressed: isInChat || isWaiting ? null : () {
-                    _chatService.startChat();
-                  },
-                  child: Text('Start Chat'),
-                ),
-                SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: !isInChat ? null : () {
-                    _chatService.endChat();
-                  },
-                  child: Text('End Chat'),
-                ),
-                SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: !isInChat ? null : () {
-                    _chatService.skipChat();
-                  },
-                  child: Text('Skip'),
-                ),
-              ],
-            ),
-          ),
-
-          // Status
-          if (isWaiting)
-            Container(
-              padding: EdgeInsets.all(16),
-              child: Text('Waiting for partner...'),
-            ),
-
-          // Messages
-          Expanded(
-            child: ListView.builder(
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final message = messages[index];
-                return ListTile(
-                  title: Text(message['message']),
-                  subtitle: Text(message['isMe'] ? 'You' : 'Stranger'),
-                );
-              },
-            ),
-          ),
-
-          // Message input
-          if (isInChat)
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      if (_messageController.text.isNotEmpty) {
-                        _chatService.sendMessage(_messageController.text);
-                        setState(() {
-                          messages.add({
-                            'message': _messageController.text,
-                            'isMe': true,
-                            'timestamp': DateTime.now(),
-                          });
-                        });
-                        _messageController.clear();
-                      }
-                    },
-                    icon: Icon(Icons.send),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _chatService.disconnect();
-    super.dispose();
-  }
-}
+```bash
+npm start          # Production mode
+npm run dev        # Development mode with auto-restart
 ```
 
-## Server Configuration
+### Access Points
 
-### Environment Variables
+- **WebSocket**: `ws://localhost:3000`
+- **HTTP API**: `http://localhost:3000`
+- **Health Check**: `http://localhost:3000/health`
+- **Statistics**: `http://localhost:3000/api/stats`
 
-- `PORT`: Server port (default: 3000)
+## 📚 Documentation
 
-### CORS Configuration
+### Event Documentation
 
-The server is configured to accept connections from any origin. For production, update the CORS settings in `index.js`:
+- **[Connection Events](docs/CONNECTION_EVENTS.md)** - Connection lifecycle and user management
+- **[Chat Events](docs/CHAT_EVENTS.md)** - One-on-one chat functionality
+- **[Group Chat Events](docs/GROUP_CHAT_EVENTS.md)** - Group chat operations
+- **[Profile Events](docs/PROFILE_EVENTS.md)** - User profile management
+- **[Statistics Events](docs/STATISTICS_EVENTS.md)** - Real-time monitoring
+
+### API Documentation
+
+- **[HTTP API Endpoints](docs/API_ENDPOINTS.md)** - REST API reference
+- **[App Overview](docs/APP_OVERVIEW.md)** - Comprehensive application guide
+
+### Architecture Documentation
+
+- **[MVC Architecture](MVC_README.md)** - Detailed architecture documentation
+
+## 🔌 WebSocket Events
+
+### Connection Events
+
+- `connected` - Connection confirmation
+- `disconnect` - User disconnection
+- `activeUsers` - Real-time user count
+- `error` - Error notifications
+
+### Chat Events
+
+- `startChat` - Start partner search
+- `chatStarted` - Chat session began
+- `sendMessage` - Send message
+- `messageReceived` - Receive message
+- `skipChat` - Skip to next partner
+- `endChat` - End current chat
+- `chatEnded` - Partner ended chat
+- `waitingForPartner` - Waiting for match
+
+### Group Chat Events
+
+- `joinGroup` - Join group chat
+- `groupJoined` - Successfully joined
+- `sendGroupMessage` - Send group message
+- `groupMessageReceived` - Receive group message
+- `userJoinedGroup` - User joined notification
+- `userLeftGroup` - User left notification
+- `endGroupChat` - Leave group
+- `groupLeft` - Successfully left
+
+### Profile Events
+
+- `manageProfile` - Update profile
+- `profileUpdated` - Profile update confirmation
+- `getProfile` - Request profile data
+- `profileData` - Profile data response
+- `setGenderPreference` - Set matching preference
+- `removeGenderPreference` - Remove preference
+- `genderPreferenceUpdated` - Preference update confirmation
+
+## 🌐 HTTP API Endpoints
+
+### Core Endpoints
+
+- `GET /` - Server information and statistics
+- `GET /health` - Health check and system metrics
+- `GET /api/stats` - Comprehensive statistics
+- `GET /api/users/count` - Active user count
+- `GET /api/users/active` - Active users information
+
+### Statistics Endpoints
+
+- `GET /api/stats/users` - User statistics
+- `GET /api/stats/chats` - Chat statistics
+- `GET /api/stats/groups` - Group chat statistics
+
+### Admin Endpoints
+
+- `GET /api/admin/cleanup` - System cleanup
+- `GET /api/admin/system-info` - System information
+
+## 🛠️ Client Implementation Example
 
 ```javascript
-const io = socketIo(server, {
-  cors: {
-    origin: "your-flutter-app-domain.com",
-    methods: ["GET", "POST"],
-  },
+const socket = io("http://localhost:3000");
+
+// Connection handling
+socket.on("connected", (data) => {
+  console.log("Connected:", data.userId);
+  if (data.requiresProfileSetup) {
+    showProfileSetup();
+  }
+});
+
+// Start one-on-one chat
+socket.emit("startChat");
+
+socket.on("chatStarted", (data) => {
+  console.log("Chat started with:", data.partnerInfo.name);
+  showChatInterface(data.partnerInfo);
+});
+
+// Send message
+socket.emit("sendMessage", { message: "Hello!" });
+
+socket.on("messageReceived", (message) => {
+  displayMessage(message.senderName, message.content);
+});
+
+// Join group chat
+socket.emit("joinGroup");
+
+socket.on("groupJoined", (data) => {
+  console.log("Joined group:", data.groupId);
+  showGroupInterface(data.groupInfo);
+});
+
+// Update profile
+socket.emit("manageProfile", {
+  name: "John Doe",
+  gender: "male",
+  avatar: "avatar_url",
 });
 ```
 
-## Architecture
+## 📊 Monitoring & Analytics
 
-### Memory Storage Structure
+### Real-time Metrics
 
-- **users**: Map of connected users (socketId -> user info)
-- **waitingUsers**: Set of users waiting for chat partners
-- **activeChats**: Map of active chat sessions (chatId -> chat info)
-- **chatRooms**: Map of user to chat room mapping (socketId -> chatId)
+- Active user count
+- Chat session statistics
+- Group utilization
+- Message throughput
+- System performance
 
-### Chat Flow
+### Built-in Dashboard
 
-1. User connects to server
-2. User requests to start chat
-3. Server either matches with waiting user or adds to waiting queue
-4. When matched, both users join a chat room
-5. Messages are exchanged in real-time
-6. Chat can be ended or skipped by either user
-7. Users can start new chats after ending current one
+Access comprehensive statistics at `/api/stats` for:
 
-## Testing
+- User engagement metrics
+- Chat performance data
+- Group activity analysis
+- System health monitoring
 
-You can test the server using any WebSocket client or the provided Flutter example. The server also provides a REST endpoint at `/` for basic health checks.
+## 🔒 Security Features
 
-## Profanity Filter
+- **Input Validation**: All user inputs validated and sanitized
+- **XSS Protection**: Comprehensive input sanitization
+- **Content Filtering**: Multi-language profanity detection
+- **Error Handling**: Secure error responses
+- **Rate Limiting**: Built-in protection against abuse
 
-The server includes an automatic profanity filter that:
+## 🚀 Production Deployment
 
-- **Filters both Hindi and English** inappropriate words
-- **Replaces bad words with stars** (e.g., "badword" becomes "\*\*\*\*")
-- **Handles bypass attempts** like spacing letters (e.g., "b a d w o r d")
-- **Supports variations** with numbers/symbols (e.g., "b@dw0rd")
-- **Logs filtered messages** for monitoring purposes
-- **Works in real-time** during message sending
+### Environment Variables
 
-### Filter Coverage:
+```bash
+PORT=3000              # Server port
+NODE_ENV=production    # Environment mode
+```
 
-- **English**: Common profanity, slurs, and inappropriate terms
-- **Hindi**: Romanized Hindi curse words and inappropriate terms
-- **Bypass protection**: Handles spaced letters and character substitutions
+### Docker Support
 
-The filter automatically processes all messages before sending them to chat partners, ensuring a cleaner chat experience.
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+EXPOSE 3000
+CMD ["npm", "start"]
+```
 
-## Production Considerations
+### Health Checks
 
-- Add rate limiting for message sending
-- Implement user authentication if needed
-- Expand profanity filter word lists as needed
-- Consider using Redis for scaling across multiple server instances
-- Add logging and monitoring
-- Implement proper error handling and reconnection logic
-- Add user reporting system for inappropriate behavior
+```bash
+# Docker health check
+curl -f http://localhost:3000/health || exit 1
+
+# Kubernetes liveness probe
+curl -f http://localhost:3000/health
+```
+
+## 🔧 Development
+
+### Adding New Features
+
+1. **Create Model** (if needed)
+2. **Create Repository** for data access
+3. **Create Controller** for business logic
+4. **Update Views** for presentation
+5. **Add Documentation**
+
+### Testing
+
+```bash
+npm test              # Run tests
+npm run test:watch    # Watch mode
+npm run test:coverage # Coverage report
+```
+
+## 📈 Scaling
+
+The MVC architecture enables easy scaling:
+
+- **Horizontal Scaling**: Multiple server instances with load balancing
+- **Database Integration**: Replace memory storage with persistent databases
+- **Redis Integration**: Distributed session management
+- **Microservices**: Split components into separate services
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Follow MVC patterns for new code
+4. Add comprehensive documentation
+5. Include unit tests
+6. Commit changes (`git commit -m 'Add amazing feature'`)
+7. Push to branch (`git push origin feature/amazing-feature`)
+8. Open Pull Request
+
+## 📄 License
+
+This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **Documentation**: Check the `docs/` folder for detailed guides
+- **Issues**: Report bugs and request features via GitHub Issues
+- **Architecture**: See `MVC_README.md` for detailed architecture information
+
+---
+
+**Built with ❤️ using Node.js, Socket.IO, and MVC Architecture**

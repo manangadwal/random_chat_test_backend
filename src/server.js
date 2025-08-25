@@ -1,14 +1,14 @@
 /**
- * Main server entry point
- * Sets up Express server and Socket.IO with CORS configuration
+ * Main server entry point - MVC Architecture
+ * Sets up Express server and Socket.IO with proper MVC structure
  */
 
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const cors = require('cors');
-const SocketHandler = require('./handlers/socketHandler');
-const { users, activeChats, waitingUsers, userProfiles } = require('./storage/memoryStorage');
+const SocketView = require('./views/SocketView');
+const HttpView = require('./views/HttpView');
 
 class ChatServer {
     constructor() {
@@ -21,9 +21,14 @@ class ChatServer {
             }
         });
 
+        // Initialize views
+        this.socketView = new SocketView(this.io);
+        this.httpView = new HttpView();
+
         this.setupMiddleware();
         this.setupRoutes();
         this.setupSocketHandlers();
+        this.setupErrorHandling();
     }
 
     /**
@@ -32,36 +37,54 @@ class ChatServer {
     setupMiddleware() {
         this.app.use(cors());
         this.app.use(express.json());
-    }
+        this.app.use(express.urlencoded({ extended: true }));
 
-    /**
-     * Setup HTTP routes
-     */
-    setupRoutes() {
-        // Health check endpoint with server statistics
-        this.app.get('/', (req, res) => {
-            const profilesCompleted = Array.from(userProfiles.values())
-                .filter(profile => profile.isProfileComplete).length;
-
-            res.json({
-                message: 'Random Chat Server is running',
-                activeUsers: users.size,
-                activeChats: activeChats.size,
-                waitingUsers: waitingUsers.size,
-                profilesCompleted: profilesCompleted,
-                profilesTotal: userProfiles.size
-            });
+        // Request logging middleware
+        this.app.use((req, res, next) => {
+            console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+            next();
         });
     }
 
     /**
-     * Initialize Socket.IO event handlers
+     * Setup HTTP routes through HttpView
+     */
+    setupRoutes() {
+        this.httpView.setupRoutes(this.app);
+
+        // Handle 404 errors
+        this.app.use('*', (req, res) => {
+            this.httpView.handle404(req, res);
+        });
+    }
+
+    /**
+     * Initialize Socket.IO event handlers through SocketView
      */
     setupSocketHandlers() {
-        const socketHandler = new SocketHandler(this.io);
-
         this.io.on('connection', (socket) => {
-            socketHandler.handleConnection(socket);
+            this.socketView.handleConnection(socket);
+        });
+    }
+
+    /**
+     * Setup error handling middleware
+     */
+    setupErrorHandling() {
+        // Global error handler
+        this.app.use((error, req, res, next) => {
+            this.httpView.handleError(error, req, res, next);
+        });
+
+        // Handle uncaught exceptions
+        process.on('uncaughtException', (error) => {
+            console.error('Uncaught Exception:', error);
+            // Graceful shutdown could be implemented here
+        });
+
+        // Handle unhandled promise rejections
+        process.on('unhandledRejection', (reason, promise) => {
+            console.error('Unhandled Rejection at:', promise, 'reason:', reason);
         });
     }
 
@@ -70,9 +93,56 @@ class ChatServer {
      */
     start(port = process.env.PORT || 3000) {
         this.server.listen(port, () => {
-            console.log(`Server running on port ${port}`);
-            console.log(`WebSocket server ready for connections`);
+            console.log(`🚀 Chat Server started successfully!`);
+            console.log(`📡 Server running on port ${port}`);
+            console.log(`🔌 WebSocket server ready for connections`);
+            console.log(`🏗️  Architecture: MVC Pattern`);
+            console.log(`📊 Health check: http://localhost:${port}/health`);
+            console.log(`📈 Statistics: http://localhost:${port}/api/stats`);
+            console.log(`⏰ Started at: ${new Date().toISOString()}`);
         });
+
+        // Graceful shutdown handling
+        process.on('SIGTERM', () => this.gracefulShutdown());
+        process.on('SIGINT', () => this.gracefulShutdown());
+    }
+
+    /**
+     * Graceful shutdown
+     */
+    gracefulShutdown() {
+        console.log('\n🛑 Received shutdown signal, starting graceful shutdown...');
+
+        this.server.close(() => {
+            console.log('✅ HTTP server closed');
+
+            // Close Socket.IO server
+            this.io.close(() => {
+                console.log('✅ Socket.IO server closed');
+                console.log('👋 Graceful shutdown completed');
+                process.exit(0);
+            });
+        });
+
+        // Force shutdown after 10 seconds
+        setTimeout(() => {
+            console.error('❌ Forced shutdown after timeout');
+            process.exit(1);
+        }, 10000);
+    }
+
+    /**
+     * Get server instance (for testing)
+     */
+    getServer() {
+        return this.server;
+    }
+
+    /**
+     * Get Socket.IO instance (for testing)
+     */
+    getIO() {
+        return this.io;
     }
 }
 

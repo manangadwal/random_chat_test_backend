@@ -89,6 +89,32 @@ class MatchingService {
     static removeFromWaitingList(socketId) {
         waitingUsers.delete(socketId);
     }
+
+    /**
+     * Get count of users waiting for partners
+     * @returns {number} Number of users in waiting queue
+     */
+    static getWaitingUsersCount() {
+        return waitingUsers.size;
+    }
+
+    /**
+     * Get all waiting users (for debugging/admin)
+     * @returns {Array} Array of waiting user data
+     */
+    static getWaitingUsers() {
+        return Array.from(waitingUsers.values());
+    }
+
+    /**
+     * Clear all waiting users (for cleanup)
+     * @returns {number} Number of users cleared
+     */
+    static clearWaitingUsers() {
+        const count = waitingUsers.size;
+        waitingUsers.clear();
+        return count;
+    }
 }
 
 module.exports = MatchingService;

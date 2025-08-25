@@ -56,7 +56,7 @@ function formatTimestamp(date = new Date()) {
  * @returns {boolean} True if valid gender
  */
 function isValidGender(gender) {
-    const validGenders = ['male', 'female', 'other', 'prefer-not-to-say'];
+    const validGenders = ['male', 'female', 'other', 'prefer-not-to-say', 'non-binary'];
     return validGenders.includes(gender);
 }
 
